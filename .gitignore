@@ -8,6 +8,8 @@ backend/static/
 backend/.idea/
 backend/logs/*
 
+data/
+
 /.env
 
 docker-compose.yml

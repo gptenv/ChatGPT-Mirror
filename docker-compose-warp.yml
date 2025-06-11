@@ -9,6 +9,8 @@ x-defaults: &defaults
 services:
   web:
     image: dairoot/chatgpt-mirror:latest
+    build: .
+    container_name: chatgpt-mirror-web
     environment:
       - CHATGPT_GATEWAY_URL=http://gateway:8787
     ports:
@@ -21,6 +23,7 @@ services:
 
   gateway:
     image: dairoot/chatgpt-gateway:latest
+    container_name: chatgpt-mirror-gateway
     deploy:
       replicas: 1 # 账号数量多时可+1
     depends_on:
@@ -29,10 +32,13 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - PROXY_URL_POOL=socks5://warp:1080 # warp 代理地址
     <<: *defaults
+    ports:
+      - "38787:8787"
 
 
   cf5s:
     image: dairoot/cf5s:latest
+    container_name: chatgpt-mirror-cf5s
     depends_on:
       - gateway
     environment:
@@ -42,6 +48,7 @@ services:
 
   redis:
     image: redis:latest
+    container_name: chatgpt-mirror-redis
     restart: always
     volumes:
       - chatgpt_gateway_db:/data
@@ -50,11 +57,13 @@ services:
 
   warp:
     image: caomingjun/warp
+    container_name: chatgpt-mirror-warp
     restart: always
     devices:
       - /dev/net/tun:/dev/net/tun
     ports:
       - "1080:1080"
+      - "3808:1080"
     environment:
       - WARP_SLEEP=2
     cap_add:
@@ -69,9 +78,11 @@ services:
 
   watchtower:
     image: containrrr/watchtower
+    container_name: chatgpt-mirror-watchtower
     restart: unless-stopped
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      #- /var/run/docker.sock:/var/run/docker.sock # regular docker context config
+      - /run/user/1000/docker.sock:/var/run/docker.sock # rootless docker context config for first user account
     command: --cleanup --interval 3600 --label-enable
 
 
