@@ -9,3 +9,5 @@ backend/.idea/
 backend/logs/*
 
 /.env
+
+docker-compose.yml
